@@ -11,9 +11,10 @@ COPY torrc /etc/tor/torrc
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY supervisord.conf /etc/supervisord.conf
 
-RUN echo 'forward-socks5t / 127.0.0.1:9050 .' >> /etc/privoxy/config && \
-    sed -i 's/^listen-address.*/listen-address 127.0.0.1:8118/' /etc/privoxy/config
-
+RUN sed -i 's/^listen-address.*/listen-address 127.0.0.1:8118/' /etc/privoxy/config && \
+    sed -i 's/^#*accept-intercepted-requests.*/accept-intercepted-requests 1/' /etc/privoxy/config && \
+    echo 'forward-socks5t / 127.0.0.1:9050 .' >> /etc/privoxy/config
+    
 EXPOSE 8080
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
