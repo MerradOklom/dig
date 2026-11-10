@@ -12,11 +12,15 @@ COPY nginx.conf /etc/nginx/nginx.conf
 COPY supervisord.conf /etc/supervisord.conf
 
 # Configure Privoxy:
-# 1. Bind to 127.0.0.1:8118
-# 2. Enable reverse-proxy mode (accept-intercepted-requests 1) to eliminate "Invalid header" error
-# 3. Forward all traffic to Tor's SOCKS5 listener (127.0.0.1:9050)
-RUN sed -i 's/^listen-address.*/listen-address 127.0.0.1:8118/' /etc/privoxy/config && \
+# 1. Initialize /etc/privoxy/config from config.new (Alpine standard)
+# 2. Enable reverse-proxy intercept mode (accept-intercepted-requests 1)
+# 3. Set listen address to 127.0.0.1:8118
+# 4. Route traffic through Tor SOCKS5 (127.0.0.1:9050)
+RUN [ -f /etc/privoxy/config.new ] && cp /etc/privoxy/config.new /etc/privoxy/config || true && \
+    touch /etc/privoxy/config && \
+    sed -i 's/^listen-address.*/listen-address 127.0.0.1:8118/' /etc/privoxy/config && \
     sed -i 's/^#*accept-intercepted-requests.*/accept-intercepted-requests 1/' /etc/privoxy/config && \
+    grep -q 'accept-intercepted-requests 1' /etc/privoxy/config || echo 'accept-intercepted-requests 1' >> /etc/privoxy/config && \
     echo 'forward-socks5t / 127.0.0.1:9050 .' >> /etc/privoxy/config
 
 EXPOSE 8080
